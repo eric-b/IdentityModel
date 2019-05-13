@@ -90,6 +90,32 @@ namespace IdentityModel.Client
 
             return clone;
         }
+
+        /// <summary>
+        /// Clones this instance.
+        /// </summary>
+        /// <returns></returns>
+        public T Clone<T>()
+            where T: ProtocolRequest, new()
+        {
+            var clone = new T
+            {
+                Address = Address,
+                AuthorizationHeaderStyle = AuthorizationHeaderStyle,
+                ClientAssertion = ClientAssertion,
+                ClientCredentialStyle = ClientCredentialStyle,
+                ClientId = ClientId,
+                ClientSecret = ClientSecret,
+                Parameters = new Dictionary<string, string>()
+            };
+
+            if (Parameters != null)
+            {
+                foreach (var item in Parameters) clone.Parameters.Add(item);
+            }
+
+            return clone;
+        }
     }
 
     /// <summary>

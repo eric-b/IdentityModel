@@ -22,7 +22,8 @@ namespace IdentityModel.Client
         /// <param name="httpResponse">The HTTP response.</param>
         /// <param name="initializationData">The initialization data.</param>
         /// <returns></returns>
-        public static async Task<T> FromHttpResponseAsync<T>(HttpResponseMessage httpResponse, object initializationData = null) where T: ProtocolResponse, new()
+        public static async Task<T> FromHttpResponseAsync<T>(HttpResponseMessage httpResponse, object initializationData = null) 
+            where T: ProtocolResponse, new()
         {
             var response = new T
             {

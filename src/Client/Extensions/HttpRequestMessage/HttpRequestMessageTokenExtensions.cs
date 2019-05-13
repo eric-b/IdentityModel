@@ -7,7 +7,7 @@ namespace IdentityModel.Client
 {
     public static class HttpRequestMessageTokenExtensions
     {
-        public static void SetProtocolRequest(this HttpRequestMessage httpRequest, ProtocolRequest request)
+        public static void SetTokenRequest(this HttpRequestMessage httpRequest, TokenRequest request)
         {
             if (!request.Parameters.TryGetValue(OidcConstants.TokenRequest.ClientId, out _))
             {
