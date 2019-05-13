@@ -25,12 +25,10 @@ namespace IdentityModel.Client
         /// <returns></returns>
         public static async Task<TokenResponse> RequestClientCredentialsTokenAsync(this HttpMessageInvoker client, ClientCredentialsTokenRequest request, CancellationToken cancellationToken = default)
         {
-            var clone = request.Clone<ClientCredentialsTokenRequest>();
+            var httpRequest = new HttpRequestMessage();
+            httpRequest.SetClientCredentialsTokenRequest(request);
 
-            clone.Parameters.AddRequired(OidcConstants.TokenRequest.GrantType, OidcConstants.GrantTypes.ClientCredentials);
-            clone.Parameters.AddOptional(OidcConstants.TokenRequest.Scope, request.Scope);
-
-            return await client.RequestTokenAsync(clone, cancellationToken).ConfigureAwait(false);
+            return await client.SendInternalAsync(httpRequest, cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -42,12 +40,10 @@ namespace IdentityModel.Client
         /// <returns></returns>
         public static async Task<TokenResponse> RequestDeviceTokenAsync(this HttpMessageInvoker client, DeviceTokenRequest request, CancellationToken cancellationToken = default)
         {
-            var clone = request.Clone<DeviceTokenRequest>();
+            var httpRequest = new HttpRequestMessage();
+            httpRequest.SetDeviceTokenRequest(request);
 
-            clone.Parameters.AddRequired(OidcConstants.TokenRequest.GrantType, OidcConstants.GrantTypes.DeviceCode);
-            clone.Parameters.AddRequired(OidcConstants.TokenRequest.DeviceCode, request.DeviceCode);
-
-            return await client.RequestTokenAsync(clone, cancellationToken).ConfigureAwait(false);
+            return await client.SendInternalAsync(httpRequest, cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -59,14 +55,10 @@ namespace IdentityModel.Client
         /// <returns></returns>
         public static async Task<TokenResponse> RequestPasswordTokenAsync(this HttpMessageInvoker client, PasswordTokenRequest request, CancellationToken cancellationToken = default)
         {
-            var clone = request.Clone<PasswordTokenRequest>();
+            var httpRequest = new HttpRequestMessage();
+            httpRequest.SetPasswordTokenRequest(request);
 
-            clone.Parameters.AddRequired(OidcConstants.TokenRequest.GrantType, OidcConstants.GrantTypes.Password);
-            clone.Parameters.AddRequired(OidcConstants.TokenRequest.UserName, request.UserName);
-            clone.Parameters.AddRequired(OidcConstants.TokenRequest.Password, request.Password, allowEmpty: true);
-            clone.Parameters.AddOptional(OidcConstants.TokenRequest.Scope, request.Scope);
-
-            return await client.RequestTokenAsync(clone, cancellationToken).ConfigureAwait(false);
+            return await client.SendInternalAsync(httpRequest, cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -78,14 +70,10 @@ namespace IdentityModel.Client
         /// <returns></returns>
         public static async Task<TokenResponse> RequestAuthorizationCodeTokenAsync(this HttpMessageInvoker client, AuthorizationCodeTokenRequest request, CancellationToken cancellationToken = default)
         {
-            var clone = request.Clone<AuthorizationCodeTokenRequest>();
+            var httpRequest = new HttpRequestMessage();
+            httpRequest.SetAuthorizationCodeTokenRequest(request);
 
-            clone.Parameters.AddRequired(OidcConstants.TokenRequest.GrantType, OidcConstants.GrantTypes.AuthorizationCode);
-            clone.Parameters.AddRequired(OidcConstants.TokenRequest.Code, request.Code);
-            clone.Parameters.AddRequired(OidcConstants.TokenRequest.RedirectUri, request.RedirectUri);
-            clone.Parameters.AddOptional(OidcConstants.TokenRequest.CodeVerifier, request.CodeVerifier);
-
-            return await client.RequestTokenAsync(clone, cancellationToken).ConfigureAwait(false);
+            return await client.SendInternalAsync(httpRequest, cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -97,13 +85,10 @@ namespace IdentityModel.Client
         /// <returns></returns>
         public static async Task<TokenResponse> RequestRefreshTokenAsync(this HttpMessageInvoker client, RefreshTokenRequest request, CancellationToken cancellationToken = default)
         {
-            var clone = request.Clone<RefreshTokenRequest>();
+            var httpRequest = new HttpRequestMessage();
+            httpRequest.SetRefreshTokenRequest(request);
 
-            clone.Parameters.AddRequired(OidcConstants.TokenRequest.GrantType, OidcConstants.GrantTypes.RefreshToken);
-            clone.Parameters.AddRequired(OidcConstants.TokenRequest.RefreshToken, request.RefreshToken);
-            clone.Parameters.AddOptional(OidcConstants.TokenRequest.Scope, request.Scope);
-
-            return await client.RequestTokenAsync(clone, cancellationToken).ConfigureAwait(false);
+            return await client.SendInternalAsync(httpRequest, cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -115,14 +100,19 @@ namespace IdentityModel.Client
         /// <returns></returns>
         public static async Task<TokenResponse> RequestTokenAsync(this HttpMessageInvoker client, TokenRequest request, CancellationToken cancellationToken = default)
         {
-            var clone = request.Clone<TokenRequest>();
+            var httpRequest = new HttpRequestMessage();
+            httpRequest.SetTokenRequest(request);
 
-            if (!clone.Parameters.ContainsKey(OidcConstants.TokenRequest.GrantType))
-            {
-                clone.Parameters.AddRequired(OidcConstants.TokenRequest.GrantType, request.GrantType);
-            }
+            return await client.SendInternalAsync(httpRequest, cancellationToken).ConfigureAwait(false);
 
-            return await client.RequestTokenInternalAsync(clone, cancellationToken).ConfigureAwait(false);
+            //var clone = request.Clone<TokenRequest>();
+
+            //if (!clone.Parameters.ContainsKey(OidcConstants.TokenRequest.GrantType))
+            //{
+            //    clone.Parameters.AddRequired(OidcConstants.TokenRequest.GrantType, request.GrantType);
+            //}
+
+            //return await client.RequestTokenInternalAsync(clone, cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -147,11 +137,26 @@ namespace IdentityModel.Client
             return await client.RequestTokenAsync(request).ConfigureAwait(false);
         }
 
-        internal static async Task<TokenResponse> RequestTokenInternalAsync(this HttpMessageInvoker client, ProtocolRequest request, CancellationToken cancellationToken = default)
-        {
-            var httpRequest = new HttpRequestMessage();
-            httpRequest.SetTokenRequest(request as TokenRequest);
+        //internal static async Task<TokenResponse> RequestTokenInternalAsync(this HttpMessageInvoker client, ProtocolRequest request, CancellationToken cancellationToken = default)
+        //{
+        //    var httpRequest = new HttpRequestMessage();
+        //    httpRequest.SetTokenRequest(request as TokenRequest);
 
+        //    HttpResponseMessage response;
+        //    try
+        //    {
+        //        response = await client.SendAsync(httpRequest, cancellationToken).ConfigureAwait(false);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return ProtocolResponse.FromException<TokenResponse>(ex);
+        //    }
+
+        //    return await ProtocolResponse.FromHttpResponseAsync<TokenResponse>(response).ConfigureAwait(false);
+        //}
+
+        internal static async Task<TokenResponse> SendInternalAsync(this HttpMessageInvoker client, HttpRequestMessage httpRequest, CancellationToken cancellationToken = default)
+        {
             HttpResponseMessage response;
             try
             {
