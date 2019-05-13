@@ -62,14 +62,6 @@ namespace IdentityModel.Client
             httpRequest.SetTokenRequest(clone);
         }
 
-
-
-
-
-
-
-
-
         public static void SetTokenRequest(this HttpRequestMessage httpRequest, TokenRequest request)
         {
             if (!request.Parameters.ContainsKey(OidcConstants.TokenRequest.GrantType))
@@ -77,7 +69,7 @@ namespace IdentityModel.Client
                 request.Parameters.AddRequired(OidcConstants.TokenRequest.GrantType, request.GrantType);
             }
 
-            if (!request.Parameters.TryGetValue(OidcConstants.TokenRequest.ClientId, out _))
+            if (!request.Parameters.ContainsKey(OidcConstants.TokenRequest.ClientId))
             {
                 if (request.ClientId.IsMissing()) throw new InvalidOperationException("client_id is missing");
             }
@@ -86,8 +78,6 @@ namespace IdentityModel.Client
             {
                 httpRequest.RequestUri = new Uri(request.Address);
             }
-
-
 
             httpRequest.Method = HttpMethod.Post;
 
