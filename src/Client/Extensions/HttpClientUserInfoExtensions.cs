@@ -1,10 +1,8 @@
 ﻿// Copyright (c) Brock Allen & Dominick Baier. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
-using IdentityModel.Internal;
 using System;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -24,12 +22,8 @@ namespace IdentityModel.Client
         /// <returns></returns>
         public static async Task<UserInfoResponse> GetUserInfoAsync(this HttpMessageInvoker client, UserInfoRequest request, CancellationToken cancellationToken = default)
         {
-            if (request.Token.IsMissing()) throw new ArgumentNullException(nameof(request.Token));
-
-            var httpRequest = new HttpRequestMessage(HttpMethod.Get, request.Address);
-            httpRequest.Headers.Accept.Clear();
-            httpRequest.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            httpRequest.SetBearerToken(request.Token);
+            var httpRequest = new HttpRequestMessage();
+            httpRequest.SetUserInfoRequest(request);
 
             HttpResponseMessage response;
             try
