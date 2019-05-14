@@ -28,7 +28,12 @@ namespace WebApplication1.Controllers
             {
                 Address = "https://demo.identityserver.io/connect/token",
                 ClientId = "client",
-                ClientSecret = "secret"
+                ClientSecret = "secret",
+
+                Headers =
+                {
+                    { "foo", new[] {"bar" }}
+                }
             });
 
             return response.AccessToken ?? response.Error;

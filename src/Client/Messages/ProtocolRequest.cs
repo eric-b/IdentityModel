@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using System.Collections.Generic;
+using System.Net.Http.Headers;
 
 namespace IdentityModel.Client
 {
@@ -17,6 +18,8 @@ namespace IdentityModel.Client
         /// The address.
         /// </value>
         public string Address { get; set; }
+
+        public IDictionary<string, IEnumerable<string>> Headers { get; set; } = new Dictionary<string, IEnumerable<string>>();
 
         /// <summary>
         /// Gets or sets the client identifier.
