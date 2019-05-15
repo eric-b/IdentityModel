@@ -29,7 +29,8 @@ namespace build
                 {
                     var solution = Directory.GetFiles(".", "*.sln", SearchOption.TopDirectoryOnly).First();
 
-                    Run("dotnet", $"build IdentityModel.sln -c Release");
+                    //Run("dotnet", $"build {solution} -c Release");
+                    System.Diagnostics.Process.Start($"dotnet build {solution} -c Release");
 
                     if (sign.HasValue())
                     {
