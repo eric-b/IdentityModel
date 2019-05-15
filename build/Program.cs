@@ -29,7 +29,7 @@ namespace build
                 {
                     var solution = Directory.GetFiles(".", "*.sln", SearchOption.TopDirectoryOnly).First();
 
-                    Run("dotnet", $"build {solution} -c Release");
+                    Run("dotnet", $"build IdentityModel.sln -c Release");
 
                     if (sign.HasValue())
                     {
