@@ -106,7 +106,7 @@ namespace IdentityModel.Client
         /// <returns></returns>
         protected virtual Task InitializeAsync(object initializationData = null)
         {
-            return Task.CompletedTask;
+            return TaskEx.CompletedTask;
         }
 
         /// <summary>

@@ -25,7 +25,7 @@ namespace IdentityModel.Client
             if (!HttpResponse.IsSuccessStatusCode)
             {
                 ErrorMessage = initializationData as string;
-                return Task.CompletedTask;
+                return TaskEx.CompletedTask;
             }
 
             Policy = initializationData as DiscoveryPolicy ?? new DiscoveryPolicy();
@@ -40,7 +40,7 @@ namespace IdentityModel.Client
                 ErrorMessage = validationError;
             }
 
-            return Task.CompletedTask;
+            return TaskEx.CompletedTask;
         }
 
         /// <summary>

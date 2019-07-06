@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 using System.Threading.Tasks;
+using IdentityModel.Internal;
 using IdentityModel.Jwk;
 
 namespace IdentityModel.Client
@@ -28,7 +29,7 @@ namespace IdentityModel.Client
                 KeySet = new JsonWebKeySet(Raw);
             }
 
-            return Task.CompletedTask;
+            return TaskEx.CompletedTask;
         }
 
         /// <summary>

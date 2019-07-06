@@ -3,7 +3,6 @@
 
 using FluentAssertions;
 using IdentityModel.Client;
-using Microsoft.AspNetCore.WebUtilities;
 using Newtonsoft.Json;
 using System;
 using System.IO;
@@ -12,6 +11,10 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Xunit;
+
+#if NET461 || NETCOREAPP
+using Microsoft.AspNetCore.WebUtilities;
+#endif
 
 namespace IdentityModel.UnitTests
 {
@@ -76,6 +79,7 @@ namespace IdentityModel.UnitTests
             request.Headers.Authorization.Parameter.Should().Be(BasicAuthenticationOAuthHeaderValue.EncodeCredential("client", "secret"));
         }
 
+#if NET461 || NETCOREAPP
         [Fact]
         public async Task Setting_post_values_authentication_style_should_post_values()
         {
@@ -99,6 +103,7 @@ namespace IdentityModel.UnitTests
             fields["client_id"].First().Should().Be("client");
             fields["client_secret"].First().Should().Be("secret");
         }
+#endif
 
         [Fact]
         public async Task Valid_protocol_response_should_be_handled_correctly()

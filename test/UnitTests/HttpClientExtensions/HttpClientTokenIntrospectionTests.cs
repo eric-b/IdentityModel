@@ -3,7 +3,6 @@
 
 using FluentAssertions;
 using IdentityModel.Client;
-using Microsoft.AspNetCore.WebUtilities;
 using System;
 using System.IO;
 using System.Linq;
@@ -11,6 +10,10 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Xunit;
+
+#if NET461 || NETCOREAPP
+using Microsoft.AspNetCore.WebUtilities;
+#endif
 
 namespace IdentityModel.UnitTests
 {
@@ -282,6 +285,7 @@ namespace IdentityModel.UnitTests
 
         }
 
+#if NET461 || NETCOREAPP
         [Fact]
         public async Task Additional_request_parameters_should_be_handled_correctly()
         {
@@ -317,5 +321,6 @@ namespace IdentityModel.UnitTests
             response.IsActive.Should().BeTrue();
             response.Claims.Should().NotBeEmpty();
         }
+#endif
     }
 }

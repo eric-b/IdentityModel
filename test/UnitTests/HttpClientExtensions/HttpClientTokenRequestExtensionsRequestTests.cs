@@ -3,7 +3,6 @@
 
 using FluentAssertions;
 using IdentityModel.Client;
-using Microsoft.AspNetCore.WebUtilities;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -12,6 +11,10 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Xunit;
+
+#if NET461 || NETCOREAPP
+using Microsoft.AspNetCore.WebUtilities;
+#endif
 
 namespace IdentityModel.UnitTests
 {
@@ -78,6 +81,7 @@ namespace IdentityModel.UnitTests
             _handler.Request.RequestUri.AbsoluteUri.Should().Be(Endpoint);
         }
 
+#if NET461 || NETCOREAPP
         [Fact]
         public async Task Repeating_a_request_should_succeed()
         {
@@ -127,57 +131,7 @@ namespace IdentityModel.UnitTests
             scope.First().Should().Be("scope");
         }
 
-        [Fact]
-        public async Task Additional_headers_should_be_propagated()
-        {
-            var request = new ClientCredentialsTokenRequest
-            {
-                ClientId = "client",
-                Scope = "scope"
-            };
-
-            request.Headers.Add("foo", "bar");
-
-            var response = await _client.RequestClientCredentialsTokenAsync(request);
-
-            response.IsError.Should().BeFalse();
-
-            var headers = _handler.Request.Headers;
-            var foo = headers.FirstOrDefault(h => h.Key == "foo");
-            foo.Should().NotBeNull();
-            foo.Value.Single().Should().Be("bar");    
-        }
-
-        [Fact]
-        public async Task Additional_request_properties_should_be_propagated()
-        {
-            var request = new ClientCredentialsTokenRequest
-            {
-                ClientId = "client",
-                Scope = "scope"
-            };
-
-            request.Properties.Add("foo", "bar");
-
-            var response = await _client.RequestClientCredentialsTokenAsync(request);
-
-            response.IsError.Should().BeFalse();
-
-            var properties = _handler.Request.Properties;
-            var foo = properties.First().Value as string;
-            foo.Should().NotBeNull();
-            foo.Should().Be("bar");
-        }
-
-        [Fact]
-        public void Explicit_null_parameters_should__not_fail_()
-        {
-            Func<Task> act = async () => await _client.RequestClientCredentialsTokenAsync(new ClientCredentialsTokenRequest { ClientId = "client", Parameters = null });
-
-            act.Should().NotThrow();
-        }
-
-        [Fact]
+         [Fact]
         public async Task Device_request_should_have_correct_format()
         {
             var response = await _client.RequestDeviceTokenAsync(new DeviceTokenRequest
@@ -197,14 +151,6 @@ namespace IdentityModel.UnitTests
 
             fields.TryGetValue("device_code", out var device_code).Should().BeTrue();
             device_code.First().Should().Be("device_code");
-        }
-
-        [Fact]
-        public void Device_request_without_device_code_should_fail()
-        {
-            Func<Task> act = async () => await _client.RequestDeviceTokenAsync(new DeviceTokenRequest { ClientId = "device" });
-
-            act.Should().Throw<ArgumentException>().And.ParamName.Should().Be("device_code");
         }
 
         [Fact]
@@ -257,14 +203,6 @@ namespace IdentityModel.UnitTests
         }
 
         [Fact]
-        public void Password_request_without_username_should_fail()
-        {
-           Func<Task> act = async () => await _client.RequestPasswordTokenAsync(new PasswordTokenRequest());
-
-            act.Should().Throw<ArgumentException>().And.ParamName.Should().Be("username");
-        }
-
-        [Fact]
         public async Task Code_request_should_have_correct_format()
         {
             var response = await _client.RequestAuthorizationCodeTokenAsync(new AuthorizationCodeTokenRequest
@@ -291,29 +229,7 @@ namespace IdentityModel.UnitTests
             code_verifier.First().Should().Be("verifier");
         }
 
-        [Fact]
-        public void Code_request_without_code_should_fail()
-        {
-            Func<Task> act = async () => await _client.RequestAuthorizationCodeTokenAsync(new AuthorizationCodeTokenRequest
-            {
-                RedirectUri = "uri"
-            });
-
-            act.Should().Throw<ArgumentException>().And.ParamName.Should().Be("code");
-        }
-
-        [Fact]
-        public void Code_request_without_redirect_uri_should_fail()
-        {
-            Func<Task> act = async () => await _client.RequestAuthorizationCodeTokenAsync(new AuthorizationCodeTokenRequest
-            {
-                Code = "code"
-            });
-
-            act.Should().Throw<ArgumentException>().And.ParamName.Should().Be("redirect_uri");
-        }
-
-        [Fact]
+         [Fact]
         public async Task Refresh_request_should_have_correct_format()
         {
             var response = await _client.RequestRefreshTokenAsync(new RefreshTokenRequest
@@ -336,21 +252,6 @@ namespace IdentityModel.UnitTests
             redirect_uri.First().Should().Be("scope");
         }
 
-        [Fact]
-        public void Refresh_request_without_refresh_token_should_fail()
-        {
-            Func<Task> act = async () => await _client.RequestRefreshTokenAsync(new RefreshTokenRequest());
-
-            act.Should().Throw<ArgumentException>().And.ParamName.Should().Be("refresh_token");
-        }
-
-        [Fact]
-        public void Setting_no_grant_type_should_fail()
-        {
-            Func<Task> act = async () => await _client.RequestTokenAsync(new TokenRequest());
-
-            act.Should().Throw<ArgumentException>().And.ParamName.Should().Be("grant_type");
-        }
 
         [Fact]
         public async Task Setting_custom_parameters_should_have_correct_format()
@@ -439,24 +340,7 @@ namespace IdentityModel.UnitTests
             field.First().Should().Be("scope");
         }
 
-        [Fact]
-        public async Task Setting_basic_authentication_style_should_send_basic_authentication_header()
-        {
-            var response = await _client.RequestTokenAsync(new TokenRequest
-            {
-                GrantType = "test",
-                ClientId = "client",
-                ClientSecret = "secret",
-                ClientCredentialStyle = ClientCredentialStyle.AuthorizationHeader
-            });
-
-            var request = _handler.Request;
-
-            request.Headers.Authorization.Should().NotBeNull();
-            request.Headers.Authorization.Scheme.Should().Be("Basic");
-            request.Headers.Authorization.Parameter.Should().Be(BasicAuthenticationOAuthHeaderValue.EncodeCredential("client", "secret"));
-        }
-
+        
         [Fact]
         public async Task Setting_post_values_authentication_style_should_post_values()
         {
@@ -535,5 +419,137 @@ namespace IdentityModel.UnitTests
             fields["client_assertion_type"].First().Should().Be("type");
             fields["client_assertion"].First().Should().Be("value");
         }
+#endif
+
+        [Fact]
+        public async Task Additional_headers_should_be_propagated()
+        {
+            var request = new ClientCredentialsTokenRequest
+            {
+                ClientId = "client",
+                Scope = "scope"
+            };
+
+            request.Headers.Add("foo", "bar");
+
+            var response = await _client.RequestClientCredentialsTokenAsync(request);
+
+            response.IsError.Should().BeFalse();
+
+            var headers = _handler.Request.Headers;
+            var foo = headers.FirstOrDefault(h => h.Key == "foo");
+            foo.Should().NotBeNull();
+            foo.Value.Single().Should().Be("bar");    
+        }
+
+        [Fact]
+        public async Task Additional_request_properties_should_be_propagated()
+        {
+            var request = new ClientCredentialsTokenRequest
+            {
+                ClientId = "client",
+                Scope = "scope"
+            };
+
+            request.Properties.Add("foo", "bar");
+
+            var response = await _client.RequestClientCredentialsTokenAsync(request);
+
+            response.IsError.Should().BeFalse();
+
+            var properties = _handler.Request.Properties;
+            var foo = properties.First().Value as string;
+            foo.Should().NotBeNull();
+            foo.Should().Be("bar");
+        }
+
+        [Fact]
+        public void Explicit_null_parameters_should__not_fail_()
+        {
+            Func<Task> act = async () => await _client.RequestClientCredentialsTokenAsync(new ClientCredentialsTokenRequest { ClientId = "client", Parameters = null });
+
+            act.Should().NotThrow();
+        }
+
+     
+
+        [Fact]
+        public void Device_request_without_device_code_should_fail()
+        {
+            Func<Task> act = async () => await _client.RequestDeviceTokenAsync(new DeviceTokenRequest { ClientId = "device" });
+
+            act.Should().Throw<ArgumentException>().And.ParamName.Should().Be("device_code");
+        }
+
+      
+
+        [Fact]
+        public void Password_request_without_username_should_fail()
+        {
+           Func<Task> act = async () => await _client.RequestPasswordTokenAsync(new PasswordTokenRequest());
+
+            act.Should().Throw<ArgumentException>().And.ParamName.Should().Be("username");
+        }
+
+       
+        [Fact]
+        public void Code_request_without_code_should_fail()
+        {
+            Func<Task> act = async () => await _client.RequestAuthorizationCodeTokenAsync(new AuthorizationCodeTokenRequest
+            {
+                RedirectUri = "uri"
+            });
+
+            act.Should().Throw<ArgumentException>().And.ParamName.Should().Be("code");
+        }
+
+        [Fact]
+        public void Code_request_without_redirect_uri_should_fail()
+        {
+            Func<Task> act = async () => await _client.RequestAuthorizationCodeTokenAsync(new AuthorizationCodeTokenRequest
+            {
+                Code = "code"
+            });
+
+            act.Should().Throw<ArgumentException>().And.ParamName.Should().Be("redirect_uri");
+        }
+
+      
+        [Fact]
+        public void Refresh_request_without_refresh_token_should_fail()
+        {
+            Func<Task> act = async () => await _client.RequestRefreshTokenAsync(new RefreshTokenRequest());
+
+            act.Should().Throw<ArgumentException>().And.ParamName.Should().Be("refresh_token");
+        }
+
+        [Fact]
+        public void Setting_no_grant_type_should_fail()
+        {
+            Func<Task> act = async () => await _client.RequestTokenAsync(new TokenRequest());
+
+            act.Should().Throw<ArgumentException>().And.ParamName.Should().Be("grant_type");
+        }
+
+       
+
+        [Fact]
+        public async Task Setting_basic_authentication_style_should_send_basic_authentication_header()
+        {
+            var response = await _client.RequestTokenAsync(new TokenRequest
+            {
+                GrantType = "test",
+                ClientId = "client",
+                ClientSecret = "secret",
+                ClientCredentialStyle = ClientCredentialStyle.AuthorizationHeader
+            });
+
+            var request = _handler.Request;
+
+            request.Headers.Authorization.Should().NotBeNull();
+            request.Headers.Authorization.Scheme.Should().Be("Basic");
+            request.Headers.Authorization.Parameter.Should().Be(BasicAuthenticationOAuthHeaderValue.EncodeCredential("client", "secret"));
+        }
+
     }
 }

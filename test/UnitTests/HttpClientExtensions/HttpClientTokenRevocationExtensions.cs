@@ -3,7 +3,6 @@
 
 using FluentAssertions;
 using IdentityModel.Client;
-using Microsoft.AspNetCore.WebUtilities;
 using System;
 using System.IO;
 using System.Linq;
@@ -11,6 +10,10 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Xunit;
+
+#if NET461 || NETCOREAPP
+using Microsoft.AspNetCore.WebUtilities;
+#endif
 
 namespace IdentityModel.UnitTests
 {
@@ -176,6 +179,7 @@ namespace IdentityModel.UnitTests
             response.Error.Should().Be("not found");
         }
 
+#if NET461 || NETCOREAPP
         [Fact]
         public async Task Additional_parameters_should_be_sent_correctly()
         {
@@ -208,5 +212,6 @@ namespace IdentityModel.UnitTests
             response.ErrorType.Should().Be(ResponseErrorType.None);
             response.HttpStatusCode.Should().Be(HttpStatusCode.OK);
         }
+#endif
     }
 }

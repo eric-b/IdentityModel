@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Brock Allen & Dominick Baier. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
+using IdentityModel.Internal;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -61,7 +62,7 @@ namespace IdentityModel.Client
                 Claims = Enumerable.Empty<Claim>();
             }
 
-            return Task.CompletedTask;
+            return TaskEx.CompletedTask;
         }
 
         /// <summary>
