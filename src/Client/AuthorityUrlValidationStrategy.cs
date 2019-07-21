@@ -45,7 +45,7 @@ namespace IdentityModel.Client
 
             foreach (string authority in allowedAuthorities)
             {
-                if (!Uri.TryCreate(endpoint.RemoveTrailingSlash(), UriKind.Absolute, out var authorityUrl))
+                if (!Uri.TryCreate(authority.RemoveTrailingSlash(), UriKind.Absolute, out var authorityUrl))
                     throw new ArgumentOutOfRangeException("Authority must be a URL.", nameof(allowedAuthorities));
 
                 string expectedString = authorityUrl.ToString();
