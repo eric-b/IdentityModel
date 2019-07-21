@@ -26,7 +26,9 @@ namespace IdentityModel.Client
             return await client.GetJsonWebKeySetAsync(new JsonWebKeySetRequest
             {
                 Address = address
-            }, cancellationToken).ConfigureAwait(false);
+            }, 
+            requestVisitor: null,
+            cancellationToken: cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -36,19 +38,40 @@ namespace IdentityModel.Client
         /// <param name="request">The request</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns></returns>
-        public static async Task<JsonWebKeySetResponse> GetJsonWebKeySetAsync(this HttpMessageInvoker client, JsonWebKeySetRequest request, CancellationToken cancellationToken = default)
+        public static Task<JsonWebKeySetResponse> GetJsonWebKeySetAsync(this HttpMessageInvoker client, JsonWebKeySetRequest request, CancellationToken cancellationToken = default)
         {
-            var clone = request.Clone();
+            return GetJsonWebKeySetAsync(client, request, requestVisitor: null, cancellationToken: cancellationToken);
+        }
 
-            clone.Method = HttpMethod.Get;
-            clone.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/jwk-set+json"));
-            clone.Prepare();
+        /// <summary>
+        /// Sends a JSON web key set document request
+        /// </summary>
+        /// <param name="client">The client.</param>
+        /// <param name="request">The request</param>
+        /// <param name="requestVisitor">Action called before request is sent to <paramref name="client"/> (ignored if null).</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns></returns>
+        public static async Task<JsonWebKeySetResponse> GetJsonWebKeySetAsync(this HttpMessageInvoker client,
+                                                                              JsonWebKeySetRequest request,
+                                                                              Func<HttpRequestMessage, Task> requestVisitor,
+                                                                              CancellationToken cancellationToken = default)
+        {
+            var clonedRequest = request.Clone();
+
+            clonedRequest.Method = HttpMethod.Get;
+            clonedRequest.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/jwk-set+json"));
+            clonedRequest.Prepare();
+
+            if (requestVisitor != null)
+            {
+                await requestVisitor(clonedRequest).ConfigureAwait(false);
+            }
 
             HttpResponseMessage response;
 
             try
             {
-                response = await client.SendAsync(clone, cancellationToken).ConfigureAwait(false);
+                response = await client.SendAsync(clonedRequest, cancellationToken).ConfigureAwait(false);
 
                 string responseContent = null;
                 if (response.Content != null)
@@ -58,12 +81,12 @@ namespace IdentityModel.Client
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    return await ProtocolResponse.FromHttpResponseAsync<JsonWebKeySetResponse>(response, $"Error connecting to {clone.RequestUri.AbsoluteUri}: {response.ReasonPhrase}").ConfigureAwait(false);
+                    return await ProtocolResponse.FromHttpResponseAsync<JsonWebKeySetResponse>(response, $"Error connecting to {clonedRequest.RequestUri.AbsoluteUri}: {response.ReasonPhrase}").ConfigureAwait(false);
                 }
             }
             catch (Exception ex)
             {
-                return ProtocolResponse.FromException<JsonWebKeySetResponse>(ex, $"Error connecting to {clone.RequestUri.AbsoluteUri}. {ex.Message}.");
+                return ProtocolResponse.FromException<JsonWebKeySetResponse>(ex, $"Error connecting to {clonedRequest.RequestUri.AbsoluteUri}. {ex.Message}.");
             }
 
             return await ProtocolResponse.FromHttpResponseAsync<JsonWebKeySetResponse>(response);

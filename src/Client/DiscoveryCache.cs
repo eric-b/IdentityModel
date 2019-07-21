@@ -65,20 +65,40 @@ namespace IdentityModel.Client
         }
 
         /// <summary>
+        /// Get the DiscoveryResponse either from cache or from discovery endpoint.
+        /// </summary>
+        /// <param name="visitor">Action called before request is sent.</param>
+        /// <returns></returns>
+        public Task<DiscoveryDocumentResponse> GetAsync(Func<HttpRequestMessage, Task> visitor)
+        {
+            if (_nextReload <= DateTime.UtcNow)
+            {
+                Refresh(visitor);
+            }
+
+            return _lazyResponse.Value;
+        }
+
+        /// <summary>
         /// Marks the discovery document as stale and will trigger a request to the discovery endpoint on the next request to get the DiscoveryResponse.
         /// </summary>
         public void Refresh()
         {
-            _lazyResponse = new AsyncLazy<DiscoveryDocumentResponse>(GetResponseAsync);
+            _lazyResponse = new AsyncLazy<DiscoveryDocumentResponse>(() => GetResponseAsync());
         }
 
-        private async Task<DiscoveryDocumentResponse> GetResponseAsync()
+        private void Refresh(Func<HttpRequestMessage, Task> visitor)
+        {
+            _lazyResponse = new AsyncLazy<DiscoveryDocumentResponse>(() => GetResponseAsync(visitor));
+        }
+
+        private async Task<DiscoveryDocumentResponse> GetResponseAsync(Func<HttpRequestMessage, Task> visitor = null)
         {
             var result = await _getHttpClient().GetDiscoveryDocumentAsync(new DiscoveryDocumentRequest
             {
                 Address = _authority,
                 Policy = _policy
-            });
+            },  visitor);
 
             if (result.IsError)
             {

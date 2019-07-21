@@ -21,18 +21,39 @@ namespace IdentityModel.Client
         /// <param name="request">The request.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns></returns>
-        public static async Task<DeviceAuthorizationResponse> RequestDeviceAuthorizationAsync(this HttpMessageInvoker client, DeviceAuthorizationRequest request, CancellationToken cancellationToken = default)
+        public static Task<DeviceAuthorizationResponse> RequestDeviceAuthorizationAsync(this HttpMessageInvoker client, DeviceAuthorizationRequest request, CancellationToken cancellationToken = default)
         {
-            var clone = request.Clone();
+            return RequestDeviceAuthorizationAsync(client, request, requestVisitor: null, cancellationToken: cancellationToken);
+        }
 
-            clone.Parameters.AddOptional(OidcConstants.AuthorizeRequest.Scope, request.Scope);
-            clone.Method = HttpMethod.Post;
-            clone.Prepare();
-                        
+        /// <summary>
+        /// Sends a userinfo request.
+        /// </summary>
+        /// <param name="client">The client.</param>
+        /// <param name="request">The request.</param>
+        /// <param name="requestVisitor">Action called before request is sent to <paramref name="client"/> (ignored if null).</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns></returns>
+        public static async Task<DeviceAuthorizationResponse> RequestDeviceAuthorizationAsync(this HttpMessageInvoker client,
+                                                                                              DeviceAuthorizationRequest request,
+                                                                                              Func<HttpRequestMessage, Task> requestVisitor,
+                                                                                              CancellationToken cancellationToken = default)
+        {
+            var clonedRequest = request.Clone();
+
+            clonedRequest.Parameters.AddOptional(OidcConstants.AuthorizeRequest.Scope, request.Scope);
+            clonedRequest.Method = HttpMethod.Post;
+            clonedRequest.Prepare();
+
+            if (requestVisitor != null)
+            {
+                await requestVisitor(clonedRequest).ConfigureAwait(false);
+            }
+
             HttpResponseMessage response;
             try
             {
-                response = await client.SendAsync(clone, cancellationToken).ConfigureAwait(false);
+                response = await client.SendAsync(clonedRequest, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception ex)
             {

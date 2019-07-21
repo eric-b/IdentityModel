@@ -73,6 +73,33 @@ namespace IdentityModel.UnitTests
         }
 
         [Fact]
+        public async Task VisitedRequest_should_be_sent()
+        {
+            var handler = new NetworkHandler(HttpStatusCode.NotFound, "not found");
+
+            var client = new HttpClient(handler);
+            var request = new TokenRequest
+            {
+                Address = Endpoint,
+                ClientId = "client",
+                GrantType = "grant"
+            };
+
+            HttpRequestMessage visitedRequest = null;
+            Func<HttpRequestMessage, Task> visitor = new Func<HttpRequestMessage, Task>(r =>
+            {
+                visitedRequest = r;
+                return TaskEx.CompletedTask;
+            });
+
+            var response = await client.RequestTokenAsync(request, visitor);
+
+            var httpRequest = handler.Request;
+
+            httpRequest.Should().BeSameAs(visitedRequest);
+        }
+
+        [Fact]
         public async Task No_explicit_endpoint_address_should_use_base_addess()
         {
             var response = await _client.RequestClientCredentialsTokenAsync(new ClientCredentialsTokenRequest { ClientId = "client" });

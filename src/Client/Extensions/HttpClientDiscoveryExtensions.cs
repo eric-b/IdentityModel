@@ -23,7 +23,7 @@ namespace IdentityModel.Client
         /// <returns></returns>
         public static async Task<DiscoveryDocumentResponse> GetDiscoveryDocumentAsync(this HttpClient client, string address = null, CancellationToken cancellationToken = default)
         {
-            return await client.GetDiscoveryDocumentAsync(new DiscoveryDocumentRequest { Address = address }, cancellationToken).ConfigureAwait(false);
+            return await client.GetDiscoveryDocumentAsync(new DiscoveryDocumentRequest { Address = address }, requestVisitor: null, cancellationToken: cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -33,7 +33,23 @@ namespace IdentityModel.Client
         /// <param name="request">The request.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns></returns>
-        public static async Task<DiscoveryDocumentResponse> GetDiscoveryDocumentAsync(this HttpMessageInvoker client, DiscoveryDocumentRequest request, CancellationToken cancellationToken = default)
+        public static Task<DiscoveryDocumentResponse> GetDiscoveryDocumentAsync(this HttpMessageInvoker client, DiscoveryDocumentRequest request, CancellationToken cancellationToken = default)
+        {
+            return GetDiscoveryDocumentAsync(client, request, requestVisitor: null, cancellationToken: cancellationToken);
+        }
+
+        /// <summary>
+        /// Sends a discovery document request
+        /// </summary>
+        /// <param name="client">The client.</param>
+        /// <param name="request">The request.</param>
+        /// <param name="requestVisitor">Action called before request is sent to <paramref name="client"/> (ignored if null).</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns></returns>
+        public static async Task<DiscoveryDocumentResponse> GetDiscoveryDocumentAsync(this HttpMessageInvoker client,
+                                                                                      DiscoveryDocumentRequest request,
+                                                                                      Func<HttpRequestMessage, Task> requestVisitor,
+                                                                                      CancellationToken cancellationToken = default)
         {
             string address;
             if (request.Address.IsPresent())
@@ -67,14 +83,19 @@ namespace IdentityModel.Client
 
             try
             {
-                var clone = request.Clone();
+                var clonedRequest = request.Clone();
 
-                clone.Method = HttpMethod.Get;
-                clone.Prepare();
+                clonedRequest.Method = HttpMethod.Get;
+                clonedRequest.Prepare();
 
-                clone.RequestUri = new Uri(url);
+                clonedRequest.RequestUri = new Uri(url);
 
-                var response = await client.SendAsync(clone, cancellationToken).ConfigureAwait(false);
+                if (requestVisitor != null)
+                {
+                    await requestVisitor(clonedRequest).ConfigureAwait(false);
+                }
+
+                var response = await client.SendAsync(clonedRequest, cancellationToken).ConfigureAwait(false);
 
                 string responseContent = null;
 
@@ -105,7 +126,7 @@ namespace IdentityModel.Client
                         jwkClone.Address = jwkUrl;
                         jwkClone.Prepare();
 
-                        var jwkResponse = await client.GetJsonWebKeySetAsync(jwkClone, cancellationToken).ConfigureAwait(false);
+                        var jwkResponse = await client.GetJsonWebKeySetAsync(jwkClone, requestVisitor, cancellationToken).ConfigureAwait(false);
 
                         if (jwkResponse.IsError)
                         {

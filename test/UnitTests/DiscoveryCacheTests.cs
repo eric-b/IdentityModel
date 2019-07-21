@@ -1,5 +1,6 @@
 ﻿using FluentAssertions;
 using IdentityModel.Client;
+using System;
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -41,6 +42,26 @@ namespace IdentityModel.UnitTests
             var disco = await cache.GetAsync();
 
             disco.IsError.Should().BeFalse();
+        }
+
+        [Fact]
+        public async Task VisitedRequest_should_be_sent()
+        {
+            HttpRequestMessage visitedRequest = null;
+            Func<HttpRequestMessage, Task> visitor = new Func<HttpRequestMessage, Task>(r =>
+            {
+                visitedRequest = r;
+                return TaskEx.CompletedTask;
+            });
+
+            var client = new HttpClient(_successHandler);
+            var cache = new DiscoveryCache(_authority, () => client);
+
+            var disco = await cache.GetAsync(visitor);
+
+            var httpRequest = _successHandler.Request;
+
+            httpRequest.Should().BeSameAs(visitedRequest);
         }
     }
 }

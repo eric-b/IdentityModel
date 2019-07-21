@@ -11,6 +11,7 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Xunit;
+using IdentityModel.Internal;
 
 #if NET461 || NETCOREAPP
 using Microsoft.AspNetCore.WebUtilities;
@@ -55,6 +56,32 @@ namespace IdentityModel.UnitTests
             var prop = properties.First();
             prop.Key.Should().Be("custom");
             ((string)prop.Value).Should().Be("custom");
+        }
+
+        [Fact]
+        public async Task VisitedRequest_should_be_sent()
+        {
+            var handler = new NetworkHandler(HttpStatusCode.NotFound, "not found");
+
+            var client = new HttpClient(handler);
+            var request = new DeviceAuthorizationRequest
+            {
+                Address = Endpoint,
+                ClientId = "client"
+            };
+
+            HttpRequestMessage visitedRequest = null;
+            Func<HttpRequestMessage, Task> visitor = new Func<HttpRequestMessage, Task>(r => 
+            {
+                visitedRequest = r;
+                return TaskEx.CompletedTask;
+            });
+
+            var response = await client.RequestDeviceAuthorizationAsync(request, visitor);
+
+            var httpRequest = handler.Request;
+
+            httpRequest.Should().BeSameAs(visitedRequest);
         }
 
         [Fact]

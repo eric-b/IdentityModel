@@ -57,6 +57,32 @@ namespace IdentityModel.UnitTests
         }
 
         [Fact]
+        public async Task VisitedRequest_should_be_sent()
+        {
+            var handler = new NetworkHandler(HttpStatusCode.NotFound, "not found");
+
+            var client = new HttpClient(handler);
+            var request = new TokenIntrospectionRequest
+            {
+                Address = Endpoint,
+                Token = "token"
+            };
+
+            HttpRequestMessage visitedRequest = null;
+            Func<HttpRequestMessage, Task> visitor = new Func<HttpRequestMessage, Task>(r =>
+            {
+                visitedRequest = r;
+                return TaskEx.CompletedTask;
+            });
+
+            var response = await client.IntrospectTokenAsync(request, visitor);
+
+            var httpRequest = handler.Request;
+
+            httpRequest.Should().BeSameAs(visitedRequest);
+        }
+
+        [Fact]
         public async Task Success_protocol_response_should_be_handled_correctly()
         {
             var document = File.ReadAllText(FileName.Create("success_introspection_response.json"));

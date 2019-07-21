@@ -21,20 +21,41 @@ namespace IdentityModel.Client
         /// <param name="request">The request.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns></returns>
-        public static async Task<UserInfoResponse> GetUserInfoAsync(this HttpMessageInvoker client, UserInfoRequest request, CancellationToken cancellationToken = default)
+        public static Task<UserInfoResponse> GetUserInfoAsync(this HttpMessageInvoker client, UserInfoRequest request, CancellationToken cancellationToken = default)
+        {
+            return GetUserInfoAsync(client, request, requestVisitor: null, cancellationToken: cancellationToken);
+        }
+
+        /// <summary>
+        /// Sends a userinfo request.
+        /// </summary>
+        /// <param name="client">The client.</param>
+        /// <param name="request">The request.</param>
+        /// <param name="requestVisitor">Action called before request is sent to <paramref name="client"/> (ignored if null).</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns></returns>
+        public static async Task<UserInfoResponse> GetUserInfoAsync(this HttpMessageInvoker client,
+                                                                    UserInfoRequest request,
+                                                                    Func<HttpRequestMessage, Task> requestVisitor,
+                                                                    CancellationToken cancellationToken = default)
         {
             if (request.Token.IsMissing()) throw new ArgumentNullException(nameof(request.Token));
 
-            var clone = request.Clone();
+            var clonedRequest = request.Clone();
 
-            clone.Method = HttpMethod.Get;
-            clone.SetBearerToken(request.Token);
-            clone.Prepare();
+            clonedRequest.Method = HttpMethod.Get;
+            clonedRequest.SetBearerToken(request.Token);
+            clonedRequest.Prepare();
+
+            if (requestVisitor != null)
+            {
+                await requestVisitor(clonedRequest).ConfigureAwait(false);
+            }
 
             HttpResponseMessage response;
             try
             {
-                response = await client.SendAsync(clone, cancellationToken).ConfigureAwait(false);
+                response = await client.SendAsync(clonedRequest, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception ex)
             {

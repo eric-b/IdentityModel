@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace IdentityModel.Client
@@ -21,6 +22,13 @@ namespace IdentityModel.Client
         /// </summary>
         /// <returns></returns>
         Task<DiscoveryDocumentResponse> GetAsync();
+
+        /// <summary>
+        /// Retrieves the discovery document
+        /// </summary>
+        /// <param name="visitor">Action called before request is sent.</param>
+        /// <returns></returns>
+        Task<DiscoveryDocumentResponse> GetAsync(Func<HttpRequestMessage, Task> visitor);
 
         /// <summary>
         /// Forces a refresh on the next get.

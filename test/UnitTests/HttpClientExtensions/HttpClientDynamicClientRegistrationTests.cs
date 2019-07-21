@@ -53,6 +53,32 @@ namespace IdentityModel.UnitTests
         }
 
         [Fact]
+        public async Task VisitedRequest_should_be_sent()
+        {
+            var handler = new NetworkHandler(HttpStatusCode.NotFound, "not found");
+
+            var client = new HttpClient(handler);
+            var request = new DynamicClientRegistrationRequest
+            {
+                Address = Endpoint,
+                Document = new DynamicClientRegistrationDocument()
+            };
+
+            HttpRequestMessage visitedRequest = null;
+            Func<HttpRequestMessage, Task> visitor = new Func<HttpRequestMessage, Task>(r =>
+            {
+                visitedRequest = r;
+                return TaskEx.CompletedTask;
+            });
+
+            var response = await client.RegisterClientAsync(request, visitor);
+
+            var httpRequest = handler.Request;
+
+            httpRequest.Should().BeSameAs(visitedRequest);
+        }
+
+        [Fact]
         public async Task Valid_protocol_response_should_be_handled_correctly()
         {
             var document = File.ReadAllText(FileName.Create("success_registration_response.json"));

@@ -73,6 +73,31 @@ namespace IdentityModel.UnitTests
         }
 
         [Fact]
+        public async Task VisitedRequest_should_be_sent()
+        {
+            var handler = new NetworkHandler(HttpStatusCode.NotFound, "not found");
+
+            var client = new HttpClient(handler);
+            var request = new JsonWebKeySetRequest
+            {
+                Address = _endpoint,
+            };
+
+            HttpRequestMessage visitedRequest = null;
+            Func<HttpRequestMessage, Task> visitor = new Func<HttpRequestMessage, Task>(r =>
+            {
+                visitedRequest = r;
+                return TaskEx.CompletedTask;
+            });
+
+            var response = await client.GetJsonWebKeySetAsync(request, visitor);
+
+            var httpRequest = handler.Request;
+
+            httpRequest.Should().BeSameAs(visitedRequest);
+        }
+
+        [Fact]
         public async Task Base_address_should_work()
         {
             var client = new HttpClient(_successHandler)

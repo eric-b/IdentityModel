@@ -23,23 +23,44 @@ namespace IdentityModel.Client
         /// <param name="request">The request.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns></returns>
-        public static async Task<DynamicClientRegistrationResponse> RegisterClientAsync(this HttpMessageInvoker client, DynamicClientRegistrationRequest request, CancellationToken cancellationToken = default)
+        public static Task<DynamicClientRegistrationResponse> RegisterClientAsync(this HttpMessageInvoker client, DynamicClientRegistrationRequest request, CancellationToken cancellationToken = default)
         {
-            var clone = request.Clone();
+            return RegisterClientAsync(client, request, requestVisitor: null, cancellationToken: cancellationToken);
+        }
 
-            clone.Method = HttpMethod.Post;
-            clone.Content = new StringContent(JsonConvert.SerializeObject(request.Document), Encoding.UTF8, "application/json");
-            clone.Prepare();
+        /// <summary>
+        /// Send a dynamic registration request.
+        /// </summary>
+        /// <param name="client">The client.</param>
+        /// <param name="request">The request.</param>
+        /// <param name="requestVisitor">Action called before request is sent to <paramref name="client"/> (ignored if null).</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns></returns>
+        public static async Task<DynamicClientRegistrationResponse> RegisterClientAsync(this HttpMessageInvoker client,
+                                                                                        DynamicClientRegistrationRequest request,
+                                                                                        Func<HttpRequestMessage, Task> requestVisitor,
+                                                                                        CancellationToken cancellationToken = default)
+        {
+            var clonedRequest = request.Clone();
+
+            clonedRequest.Method = HttpMethod.Post;
+            clonedRequest.Content = new StringContent(JsonConvert.SerializeObject(request.Document), Encoding.UTF8, "application/json");
+            clonedRequest.Prepare();
 
             if (request.Token.IsPresent())
             {
-                clone.SetBearerToken(request.Token);
+                clonedRequest.SetBearerToken(request.Token);
+            }
+
+            if (requestVisitor != null)
+            {
+                await requestVisitor(clonedRequest).ConfigureAwait(false);
             }
 
             HttpResponseMessage response;
             try
             {
-                response = await client.SendAsync(clone, cancellationToken).ConfigureAwait(false);
+                response = await client.SendAsync(clonedRequest, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
